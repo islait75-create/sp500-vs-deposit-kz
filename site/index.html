@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S&amp;P 500 против депозита в тенге</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --ground: #f4f6f5;
+  --surface: #ffffff;
+  --sunk: #eaeeec;
+  --ink: #101a19;
+  --ink-2: #46524f;
+  --muted: #7a8582;
+  --rule: #d9dfdc;
+  --grid: #e4e8e6;
+  --accent: #0b6468;
+  --accent-soft: #d7ebeb;
+  --s-sp: #2a78d6;
+  --s-dep: #eb6834;
+  --s-usd: #1baf7a;
+  --s-cpi: #898781;
+  --s-fx: #4a3aa7;
+  --div-mid: #f0efec;
+  --good: #006300;
+  --bad: #b3261e;
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0d1211; --surface: #151b1a; --sunk: #1c2423; --ink: #eef3f1; --ink-2: #b6c0bd;
+    --muted: #87918e; --rule: #2a3331; --grid: #232b29; --accent: #5cbcbf; --accent-soft: #173537;
+    --s-sp: #3987e5; --s-dep: #d95926; --s-usd: #199e70; --s-cpi: #898781; --s-fx: #9085e9;
+    --div-mid: #383835; --good: #0ca30c; --bad: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0d1211; --surface: #151b1a; --sunk: #1c2423; --ink: #eef3f1; --ink-2: #b6c0bd;
+  --muted: #87918e; --rule: #2a3331; --grid: #232b29; --accent: #5cbcbf; --accent-soft: #173537;
+  --s-sp: #3987e5; --s-dep: #d95926; --s-usd: #199e70; --s-cpi: #898781; --s-fx: #9085e9;
+  --div-mid: #383835; --good: #0ca30c; --bad: #e66767;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 400 17px/1.6 var(--body); padding-inline: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.num, table td, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- hero ---------- */
+.hero { max-width: 1180px; margin: 0 auto; padding-block: 48px 40px; display: grid; gap: 36px; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.hero h1 {
+  font: 700 clamp(34px, 5.6vw, 68px)/1.02 var(--display); letter-spacing: -.02em; margin: 14px 0 0;
+  text-wrap: balance; max-width: 16ch;
+}
+.hero h1 .tng { color: var(--s-dep); }
+.hero h1 .spx { color: var(--s-sp); }
+.lede { font-size: 19px; color: var(--ink-2); max-width: 62ch; margin: 18px 0 0; }
+.board {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px;
+  background: var(--rule); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden;
+}
+.board > div { background: var(--surface); padding: 20px 22px; display: grid; gap: 6px; align-content: start; }
+.board .k { font-size: 13px; color: var(--muted); }
+.board .v { font: 600 clamp(26px, 3vw, 34px)/1.1 var(--mono); letter-spacing: -.02em; }
+.board .v small { font-size: .5em; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+.board .d { font-size: 13px; color: var(--ink-2); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
+
+.verdict {
+  background: var(--ink); color: var(--ground); border-radius: 14px; padding: 26px 28px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 28px; align-items: start;
+}
+.verdict h2 { font: 700 22px/1.2 var(--display); margin: 0; }
+.verdict p { margin: 0; color: color-mix(in srgb, var(--ground) 82%, var(--ink)); }
+.verdict strong { color: var(--ground); }
+@media (max-width: 760px) { .verdict { grid-template-columns: 1fr; gap: 12px; } }
+
+/* ---------- layout ---------- */
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px; padding-block: 8px 80px; }
+nav.toc { position: sticky; top: 20px; align-self: start; font-size: 14px; }
+nav.toc p { font: 600 11px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 6px 0 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: s; }
+nav.toc li { counter-increment: s; }
+nav.toc a { display: grid; grid-template-columns: 26px 1fr; padding: 5px 8px; border-radius: 6px; color: var(--ink-2); text-decoration: none; }
+nav.toc a::before { content: counter(s, decimal-leading-zero); font: 400 11px/1.9 var(--mono); color: var(--muted); }
+nav.toc a:hover, nav.toc a.on { background: var(--accent-soft); color: var(--ink); }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; gap: 0; } nav.toc { display: none; } }
+
+main { min-width: 0; display: grid; gap: 72px; }
+section { display: grid; gap: 18px; scroll-margin-top: 16px; min-width: 0; }
+section > h2 { font: 700 clamp(24px, 3vw, 32px)/1.15 var(--display); letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+section > h2 .sn { font: 400 13px/1 var(--mono); color: var(--muted); display: block; margin-bottom: 10px; letter-spacing: 0; }
+h3 { font: 600 18px/1.3 var(--body); margin: 8px 0 0; }
+.prose { max-width: 68ch; }
+.prose p { margin: 0 0 12px; }
+.prose p:last-child { margin-bottom: 0; }
+.note { font-size: 14px; color: var(--muted); max-width: 72ch; }
+
+figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px 20px 14px; display: grid; gap: 12px; min-width: 0; }
+figcaption { display: grid; gap: 4px; }
+figcaption b { font-weight: 600; font-size: 16px; }
+figcaption span { font-size: 14px; color: var(--muted); }
+.chart { position: relative; height: 380px; }
+.chart.short { height: 280px; }
+.chart.tall { height: 440px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--ink-2); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+
+.seg { display: inline-flex; background: var(--sunk); border-radius: 9px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { font: 500 14px/1 var(--body); border: 0; background: transparent; color: var(--ink-2); padding: 8px 12px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+
+/* stat row */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; }
+.stat .v { font: 600 26px/1.15 var(--mono); }
+.stat .k { font-size: 13px; color: var(--muted); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { font: 600 12px/1.3 var(--body); color: var(--muted); text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; background: var(--surface); position: sticky; top: 0; }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 7px 12px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.pos { color: var(--good); } td.neg { color: var(--bad); }
+.chip { font: 600 12px/1 var(--body); padding: 4px 8px; border-radius: 99px; display: inline-block; }
+.chip.sp { background: color-mix(in srgb, var(--s-sp) 16%, transparent); color: var(--s-sp); }
+.chip.dep { background: color-mix(in srgb, var(--s-dep) 16%, transparent); color: var(--s-dep); }
+tr.partial td { color: var(--muted); font-style: italic; }
+.tbl.scroll { max-height: 520px; }
+
+/* heatmap */
+.heat { overflow-x: auto; }
+.heat-grid { display: grid; gap: 2px; font: 400 10px/1 var(--mono); color: var(--muted); width: max-content; }
+.heat-grid .c { width: 22px; height: 22px; border-radius: 3px; }
+.heat-grid .c:hover { outline: 2px solid var(--ink); outline-offset: 0; }
+.heat-grid .lab { display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; height: 22px; }
+.heat-grid .top { writing-mode: vertical-rl; transform: rotate(180deg); height: 34px; display: flex; align-items: center; justify-content: flex-start; }
+.heat-legend { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+.heat-legend .bar { width: 220px; height: 10px; border-radius: 5px; }
+.readout { font-size: 14px; color: var(--ink-2); min-height: 22px; }
+.readout b { font-family: var(--mono); color: var(--ink); }
+
+/* hypotheses */
+.hyp { display: grid; gap: 10px; }
+.hyp div { display: grid; grid-template-columns: 110px 1fr; gap: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 18px; align-items: baseline; }
+.hyp .tag { font: 600 12px/1.2 var(--body); letter-spacing: .06em; text-transform: uppercase; }
+.hyp .ok { color: var(--good); } .hyp .no { color: var(--bad); } .hyp .mid { color: var(--accent); }
+@media (max-width: 560px) { .hyp div { grid-template-columns: 1fr; gap: 4px; } }
+
+/* calculator */
+.calc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 760px) { .calc { grid-template-columns: 1fr; } }
+.calc .inputs { display: grid; gap: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; }
+.field { display: grid; gap: 6px; }
+.field label { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); gap: 12px; }
+.field output { font: 600 14px/1 var(--mono); color: var(--ink); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.calc .result { background: var(--ink); color: var(--ground); border-radius: 14px; padding: 22px; display: grid; gap: 16px; align-content: start; }
+.calc .result .row { display: grid; gap: 2px; }
+.calc .result .k { font-size: 13px; opacity: .7; }
+.calc .result .v { font: 600 30px/1.1 var(--mono); }
+.calc .result .big { font: 700 20px/1.3 var(--display); text-wrap: balance; }
+.meter { height: 10px; background: color-mix(in srgb, var(--ground) 18%, transparent); border-radius: 5px; position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; }
+
+ol.refs { padding-left: 20px; margin: 0; display: grid; gap: 8px; font-size: 15px; }
+ul.lim { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 72ch; }
+footer { max-width: 1180px; margin: 0 auto; padding-block: 28px 48px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div>
+    <div class="eyebrow">Исследование · данные НБРК, S&amp;P Dow Jones, IMF · декабрь 1999 — август 2026</div>
+    <h1>Может ли <span class="spx">S&amp;P&nbsp;500</span> стабильно обгонять депозит в <span class="tng">тенге</span>?</h1>
+    <p class="lede">Мы взяли 320 месяцев реальных данных: официальный курс Национального Банка, средневзвешенные ставки по срочным депозитам физлиц и индекс S&amp;P 500 с реинвестированием дивидендов — и посчитали всё в тенге, с налогами и комиссиями, для каждого возможного момента входа.</p>
+  </div>
+  <div class="board" id="board" aria-live="polite"></div>
+  <div class="verdict">
+    <h2>Короткий ответ</h2>
+    <p id="verdict-text">На горизонте до 5 лет — <strong>нет</strong>: шансы S&amp;P 500 обогнать депозит близки к подбрасыванию монеты (52–60% окон). На 15–20 лет — <strong>почти всегда да</strong> (90–93% исторических окон), но преимущество небольшое (≈ +1,2 п.п. в год после налогов за весь период), приходит рывками в годы девальваций и оплачивается просадками до −48%. Без трёх девальвационных лет (2009, 2014, 2015) S&amp;P 500 проигрывал бы депозиту.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Содержание">
+    <p>Содержание</p>
+    <ol>
+      <li><a href="#question">Вопрос и гипотезы</a></li>
+      <li><a href="#data">Данные</a></li>
+      <li><a href="#growth">Рост 1 млн ₸</a></li>
+      <li><a href="#years">Год за годом</a></li>
+      <li><a href="#stability">Стабильность</a></li>
+      <li><a href="#heatmap">Момент входа</a></li>
+      <li><a href="#fx">Роль девальвации</a></li>
+      <li><a href="#risk">Риск</a></li>
+      <li><a href="#dca">Регулярные взносы</a></li>
+      <li><a href="#future">Взгляд вперёд</a></li>
+      <li><a href="#calc">Калькулятор</a></li>
+      <li><a href="#conclusions">Выводы</a></li>
+      <li><a href="#method">Методология</a></li>
+      <li><a href="#sources">Источники</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <section id="question">
+      <h2><span class="sn">01</span>Вопрос и гипотезы</h2>
+      <div class="prose">
+        <p>Казахстанский сберегатель выбирает между двумя крайностями. Депозит в тенге даёт высокую номинальную ставку, гарантию КФГД и нулевой ИПН, но живёт в валюте, которая за 26 лет подешевела к доллару более чем втрое. S&amp;P 500 — 500 крупнейших компаний США — исторически один из самых доходных рынков мира, но волатилен, номинирован в долларах и облагается налогами.</p>
+        <p><b>Исследовательский вопрос:</b> обгоняет ли инвестиция в S&amp;P 500, пересчитанная в тенге, срочный тенговый депозит — и насколько <em>стабильно</em>, то есть при каком горизонте и с какой вероятностью для случайного момента входа.</p>
+      </div>
+      <div class="hyp" id="hyp"></div>
+    </section>
+
+    <section id="data">
+      <h2><span class="sn">02</span>Данные</h2>
+      <div class="prose"><p>Все ряды — месячные, с декабря 1999 по август 2026 года (первая дата, для которой API Нацбанка отдаёт официальный курс на конец месяца). Контроль качества: доходность ETF SPY отличается от индекса ^SP500TR на −0,08% в год — это ровно комиссия фонда.</p></div>
+      <div class="two">
+        <figure>
+          <figcaption><b>Официальный курс USD/KZT</b><span>Тенге за доллар, конец месяца, НБРК</span></figcaption>
+          <div class="chart short"><canvas id="c-fx" aria-label="График курса доллара к тенге"></canvas></div>
+        </figure>
+        <figure>
+          <figcaption><b>Ставки по срочным депозитам физлиц</b><span>Средневзвешенные, % годовых, новые вклады, НБРК</span></figcaption>
+          <div class="legend"><span><i class="swatch" style="background:var(--s-dep)"></i>в тенге</span><span><i class="swatch" style="background:var(--s-usd)"></i>в иностранной валюте</span></div>
+          <div class="chart short"><canvas id="c-rates" aria-label="График ставок по депозитам"></canvas></div>
+        </figure>
+      </div>
+    </section>
+
+    <section id="growth">
+      <h2><span class="sn">03</span>Что стало с 1 000 000 ₸</h2>
+      <div class="prose"><p>Вложение в конце 1999 года, без довложений. «Нетто» учитывает налог 15% на дивиденды в США, 0,1% годовых комиссий, 0,5% на конвертацию и 10% ИПН с прироста при продаже. Шкала логарифмическая: одинаковый наклон означает одинаковую доходность в процентах.</p></div>
+      <figure>
+        <div class="controls">
+          <div class="legend" id="growth-legend"></div>
+          <div class="seg" role="group" aria-label="Номинально или реально">
+            <button type="button" id="g-nom" aria-pressed="true">Номинально, ₸</button>
+            <button type="button" id="g-real" aria-pressed="false">С учётом инфляции</button>
+          </div>
+        </div>
+        <div class="chart tall"><canvas id="c-growth" aria-label="Рост капитала по стратегиям"></canvas></div>
+      </figure>
+      <div class="tbl"><table id="t-summary"></table></div>
+    </section>
+
+    <section id="years">
+      <h2><span class="sn">04</span>Год за годом</h2>
+      <div class="prose"><p>S&amp;P 500 в тенге выиграл у депозита <b>14 календарных лет из 26</b>. Но выигрыши и проигрыши несимметричны: депозит побеждает скромно и часто, S&amp;P — редко, но крупно.</p></div>
+      <figure>
+        <figcaption><b>Превышение доходности S&amp;P 500 над депозитом в тенге</b><span>Брутто, % за календарный год; 2026 — январь–август</span></figcaption>
+        <div class="legend"><span><i class="swatch" style="background:var(--s-sp)"></i>S&amp;P 500 впереди</span><span><i class="swatch" style="background:var(--s-dep)"></i>депозит впереди</span></div>
+        <div class="chart"><canvas id="c-annual" aria-label="Превышение доходности по годам"></canvas></div>
+      </figure>
+      <div class="tbl scroll"><table id="t-annual"></table></div>
+    </section>
+
+    <section id="stability">
+      <h2><span class="sn">05</span>Насколько это стабильно</h2>
+      <div class="prose">
+        <p>Ключевой тест. Для каждого горизонта мы перебрали <em>все</em> месяцы входа: 309 годовых окон, 201 десятилетнее, 81 двадцатилетнее — и посчитали долю окон, где S&amp;P 500 (нетто, после налога на выходе) принёс больше депозита.</p>
+      </div>
+      <figure>
+        <figcaption><b>Доля окон, где S&amp;P 500 обогнал депозит в тенге</b><span>По горизонту инвестирования, все месяцы входа 1999–2026</span></figcaption>
+        <div class="legend"><span><i class="swatch" style="background:var(--s-sp)"></i>нетто (налоги и комиссии)</span><span><i class="swatch" style="background:var(--s-sp);opacity:.4"></i>брутто</span></div>
+        <div class="chart short"><canvas id="c-win" aria-label="Доля выигрышных окон по горизонту"></canvas></div>
+      </figure>
+      <figure>
+        <div class="controls">
+          <figcaption><b>Годовое превышение над депозитом по дате входа</b><span>Нетто, % годовых: выше нуля — S&amp;P 500 выиграл</span></figcaption>
+          <div class="seg" role="group" aria-label="Горизонт" id="roll-seg"></div>
+        </div>
+        <div class="chart"><canvas id="c-roll" aria-label="Скользящее превышение доходности"></canvas></div>
+        <div class="readout" id="roll-readout"></div>
+      </figure>
+      <div class="tbl"><table id="t-roll"></table></div>
+    </section>
+
+    <section id="heatmap">
+      <h2><span class="sn">06</span>Всё решает момент входа</h2>
+      <div class="prose"><p>Каждая клетка — пара «купил в начале года X, продал в конце года Y». Цвет показывает среднегодовое превышение S&amp;P 500 (нетто) над депозитом. Покупка на пике доткомов в 2000 году проигрывала депозиту при любом выходе вплоть до 2019 года — два десятилетия. Вход в 2005–2008 годах отставал до 2013 года включительно, а вход в 2009–2013 годах выигрывал почти при любом выходе.</p></div>
+      <figure>
+        <div class="heat-legend"><span>депозит впереди</span><span class="bar" id="heat-bar"></span><span>S&amp;P 500 впереди</span><span class="mono" style="color:var(--muted)">шкала ±15 п.п.</span></div>
+        <div class="heat"><div class="heat-grid" id="heat-grid" role="img" aria-label="Тепловая карта: год входа по вертикали, год выхода по горизонтали"></div></div>
+        <div class="readout" id="heat-readout">Наведите на клетку: год входа — по вертикали, год выхода — по горизонтали.</div>
+      </figure>
+    </section>
+
+    <section id="fx">
+      <h2><span class="sn">07</span>Девальвация — главный союзник S&amp;P 500</h2>
+      <div class="prose">
+        <p>В долларах S&amp;P 500 приносил <b>8,4% в год</b> — меньше, чем тенговый депозит (<b>11,3%</b>). Разрыв закрыл курс: тенге ослабевал в среднем на <b>4,65% в год</b>. Но не плавно. Банки платили по тенге в среднем на 6,6 п.п. больше, чем по валютным вкладам, и в 20 годах из 26 эта надбавка перекрывала ослабление тенге. Зато в 2009, 2014 и 2015 годах курс прыгал на 19–86% за раз.</p>
+        <p>Без этих трёх лет S&amp;P 500 (нетто) отставал бы от депозита примерно на <b>2,8 п.п. в год</b>. Кроме того, курс работает как страховка: корреляция месячных доходностей S&amp;P 500 и USD/KZT отрицательна (<span class="num" id="corr">−0,23</span>) — в кризисы тенге обычно слабеет, смягчая падение рынка.</p>
+      </div>
+      <figure>
+        <figcaption><b>Надбавка ставки тенге против фактического ослабления тенге</b><span>% за год. Когда фиолетовый столбец выше оранжевого, выгоднее было держать доллары</span></figcaption>
+        <div class="legend"><span><i class="swatch" style="background:var(--s-dep)"></i>ставка KZT − ставка USD</span><span><i class="swatch" style="background:var(--s-fx)"></i>изменение курса USD/KZT</span></div>
+        <div class="chart"><canvas id="c-carry" aria-label="Процентный дифференциал и девальвация"></canvas></div>
+      </figure>
+      <div class="tbl"><table id="t-crisis"></table></div>
+    </section>
+
+    <section id="risk">
+      <h2><span class="sn">08</span>Цена преимущества — риск</h2>
+      <div class="prose"><p>Депозит ни разу не показал отрицательного месяца. S&amp;P 500 в тенге терял до 48% от пика, а худшие 12 месяцев стоили −39%. На каждый процент волатильности S&amp;P 500 добавлял к депозиту лишь ≈0,07 п.п. доходности. Смешанный портфель 50/50 забрал бóльшую часть премии при просадке всего −8%.</p></div>
+      <figure>
+        <figcaption><b>Просадка от предыдущего максимума</b><span>Капитал в тенге, %</span></figcaption>
+        <div class="legend" id="dd-legend"></div>
+        <div class="chart short"><canvas id="c-dd" aria-label="Просадки стратегий"></canvas></div>
+      </figure>
+    </section>
+
+    <section id="dca">
+      <h2><span class="sn">09</span>Если откладывать каждый месяц</h2>
+      <div class="prose"><p>Реальный сберегатель не вкладывает всё сразу, а откладывает часть зарплаты. Сценарий: 100 000 ₸ в начале каждого месяца. Регулярные взносы сглаживают риск момента входа: на горизонте 15 лет S&amp;P 500 выиграл во <b>всех</b> 141 окне.</p></div>
+      <div class="stats" id="dca-stats"></div>
+      <div class="tbl"><table id="t-dca"></table></div>
+    </section>
+
+    <section id="future">
+      <h2><span class="sn">10</span>Взгляд вперёд: бутстреп и точка безубыточности</h2>
+      <div class="prose">
+        <p>26 лет истории — это всего 2–3 независимых десятилетия, поэтому окна из раздела 05 сильно перекрываются. Чтобы проверить устойчивость, мы собрали 10 000 синтетических траекторий из случайных 24-месячных блоков истории (блочный бутстреп, сохраняет совместную динамику рынка, курса и ставок).</p>
+        <p>Результат трезвее: даже на 20 лет вероятность обогнать депозит — около <b>67%</b>, а не 93%. Исторические окна «помнят» удачную последовательность событий; бутстреп её перемешивает.</p>
+      </div>
+      <figure>
+        <figcaption><b>Распределение среднегодового превышения S&amp;P 500 (нетто) над депозитом</b><span>Бутстреп, 10 000 траекторий: светлая полоса — 5–95%, тёмная — 25–75%, точка — медиана</span></figcaption>
+        <div class="chart"><canvas id="c-boot" aria-label="Бутстреп распределение превышения"></canvas></div>
+      </figure>
+      <div class="prose"><p>Сегодняшние условия необычны: средневзвешенная ставка по срочным тенговым депозитам — <b>14,7%</b>, заметно выше исторических 10,8%. Таблица показывает, какое ежегодное ослабление тенге нужно, чтобы S&amp;P 500 просто сравнялся с депозитом.</p></div>
+      <div class="tbl"><table id="t-breakeven"></table></div>
+    </section>
+
+    <section id="calc">
+      <h2><span class="sn">11</span>Калькулятор сценария</h2>
+      <div class="prose"><p>Задайте свои предположения. Модель та же, что в исследовании: налог на дивиденды и комиссии ≈ 0,35% в год, 0,5% на конвертацию, депозит с ежемесячной капитализацией.</p></div>
+      <div class="calc">
+        <div class="inputs">
+          <div class="field"><label for="in-sp">Доходность S&amp;P 500 в долларах, % в год <output id="o-sp"></output></label><input type="range" id="in-sp" min="-2" max="14" step="0.5" value="7"></div>
+          <div class="field"><label for="in-fx">Ослабление тенге к доллару, % в год <output id="o-fx"></output></label><input type="range" id="in-fx" min="-3" max="12" step="0.5" value="4.5"></div>
+          <div class="field"><label for="in-dep">Ставка депозита в тенге, % годовых <output id="o-dep"></output></label><input type="range" id="in-dep" min="5" max="18" step="0.1" value="12"></div>
+          <div class="field"><label for="in-h">Горизонт, лет <output id="o-h"></output></label><input type="range" id="in-h" min="1" max="25" step="1" value="10"></div>
+          <div class="field"><label for="in-sum">Сумма, ₸ <output id="o-sum"></output></label><input type="range" id="in-sum" min="500000" max="50000000" step="500000" value="5000000"></div>
+          <div class="field">
+            <label>Налог на прирост при продаже</label>
+            <div class="seg" role="group" aria-label="Налог на прирост">
+              <button type="button" id="tax-10" aria-pressed="true">10% (иностранная биржа)</button>
+              <button type="button" id="tax-0" aria-pressed="false">0% (KASE / AIX)</button>
+            </div>
+          </div>
+        </div>
+        <div class="result" aria-live="polite">
+          <div class="row"><span class="k">S&amp;P 500 после налогов</span><span class="v" id="r-sp"></span><div class="meter"><i id="m-sp" style="background:var(--s-sp)"></i></div></div>
+          <div class="row"><span class="k">Депозит в тенге</span><span class="v" id="r-dep"></span><div class="meter"><i id="m-dep" style="background:var(--s-dep)"></i></div></div>
+          <div class="row"><span class="big" id="r-verdict"></span><span class="k" id="r-be"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="conclusions">
+      <h2><span class="sn">12</span>Выводы</h2>
+      <div class="prose">
+        <p><b>1. За весь период — да, но с небольшим отрывом.</b> 1 млн ₸ в S&amp;P 500 превратился бы в 23,3 млн ₸ после всех налогов против 17,5 млн ₸ на депозите: 12,5% против 11,3% в год. В реальном выражении (минус инфляция 8,75% в год) — 3,5% против 2,4%.</p>
+        <p><b>2. «Стабильно» — только на длинной дистанции.</b> На 1–5 лет S&amp;P 500 выигрывал в 52–60% случаев. Устойчивое преимущество появляется с 15 лет (90%+), а при регулярных взносах — уже с 10–15 лет.</p>
+        <p><b>3. Двигатель победы — курс, а не рынок.</b> В долларах S&amp;P 500 уступал ставке тенгового депозита. Преимущество в тенге создали девальвации 2009, 2014 и 2015 годов. Будущее ослабление тенге не гарантировано: с 2015 года курс плавающий, и крупные разовые скачки менее вероятны.</p>
+        <p><b>4. Порог сегодня выше, чем раньше.</b> При ставке 14,7% и доходности S&amp;P 500 8% в долларах тенге должен ослабевать на ≈7,5% в год, чтобы акции только догнали депозит. Если ставки вернутся к 10%, порог падает до ≈2,6%.</p>
+        <p><b>5. Разумный ответ — не «или», а «и».</b> Депозит закрывает краткосрочные цели и подушку безопасности, S&amp;P 500 — цели от 10–15 лет и валютную диверсификацию. Портфель 50/50 исторически дал 12,0% в год при просадке −8%.</p>
+      </div>
+      <p class="note">Исследование носит учебный характер и не является индивидуальной инвестиционной рекомендацией. Прошлая доходность не гарантирует будущую.</p>
+    </section>
+
+    <section id="method">
+      <h2><span class="sn">13</span>Методология и ограничения</h2>
+      <div class="prose">
+        <p><b>Депозит в тенге.</b> Средневзвешенная ставка НБРК по срочным депозитам физических лиц в национальной валюте (новые привлечённые вклады). Ставка месяца t−1 начисляется в месяце t, капитализация ежемесячная. Вознаграждение по вкладам в банках РК не облагается ИПН.</p>
+        <p><b>Депозит в долларах.</b> Средневзвешенная ставка по срочным вкладам физлиц в иностранной валюте плюс изменение официального курса.</p>
+        <p><b>S&amp;P 500.</b> Индекс полной доходности ^SP500TR (дивиденды реинвестируются), пересчёт в тенге по официальному курсу НБРК на конец месяца. Нетто-версия: −15% налога у источника на дивидендную часть (форма W-8BEN, конвенция РК–США), −0,10% в год (TER ETF и брокер), −0,5% на конвертацию и комиссии при входе и выходе, −10% ИПН с прироста в тенге при продаже (бумаги вне KASE/AIX).</p>
+        <p><b>Инфляция.</b> ИПЦ Казахстана из IMF IFS; смена базы в 2020 году сшита по официальной инфляции 7,5%; после мая 2025 года ряд продлён по годовой инфляции БНС АСПиР РК.</p>
+        <p><b>Скользящие окна</b> — все месячные даты входа; <b>бутстреп</b> — 10 000 траекторий из 24-месячных блоков совместных доходностей (seed 42).</p>
+      </div>
+      <h3>Ограничения</h3>
+      <ul class="lim">
+        <li>Средневзвешенная ставка — не лучшая ставка на рынке. Условия конкретного банка могут быть выше или ниже, а по сберегательным вкладам действуют ограничения на изъятие.</li>
+        <li>Ряды не сглаживались: в августе–сентябре 2009 года, в разгар банковского кризиса, средневзвешенная ставка по новым тенговым вкладам по данным НБРК падала до 2,8–4,7%.</li>
+        <li>Перекрывающиеся окна не независимы: 93% на 20 лет — это 81 сильно похожая траектория, а не 81 независимый эксперимент.</li>
+        <li>Ошибка выжившего: США — самый успешный фондовый рынок XX–XXI веков. Выбор именно S&amp;P 500 задним числом завышает ожидания.</li>
+        <li>Налоговая модель упрощена: с 2026 года действует новый Налоговый кодекс РК, а итоговая нагрузка зависит от брокера, биржи и совокупного дохода.</li>
+        <li>Не учтено поведение инвестора: продажа в панике во время просадки −48% превращает бумажный убыток в реальный.</li>
+        <li>Депозиты гарантированы КФГД в пределах лимитов, инвестиции в акции — нет.</li>
+      </ul>
+    </section>
+
+    <section id="sources">
+      <h2><span class="sn">14</span>Источники данных</h2>
+      <ol class="refs" id="refs"></ol>
+      <p class="note">Код анализа (Python), полный датасет и таблицы в Excel прилагаются к проекту: <span class="mono">analysis/</span>, <span class="mono">data/research_data.xlsx</span>.</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>S&amp;P 500 против депозита в тенге · исследовательский проект, 2026</span>
+  <span>Данные на 31.08.2026 · курс и ставки — Национальный Банк РК</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
